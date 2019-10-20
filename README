@@ -1,0 +1,13 @@
+See https://en.wikipedia.org/wiki/Affine_cipher for a detailed description of an affine cipher.
+
+In short, Affine ciphers are encoded by the following formula for each character in the plaintext: 
+C ≡ aP + b (mod 26) where a and b are constants, C is the ciphertext letter, and P is the plaintext letter. 
+The value a is coprime with 26 while the value b is arbitrary as long as a is not 1.
+
+This program requires a text file dictionary to find the most likely decoded message.
+
+Unimplemented functionality:
+- Update dictionary checking so that edge cases such as possesive words are counted as real words
+- Produce multiple outputs if two+ case are likely
+- Take a threshold of "realness" to produce all possibilities equal to or above that threshold
+- Add functionality for non-alphabetical input
