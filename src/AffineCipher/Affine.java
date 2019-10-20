@@ -96,11 +96,23 @@ public class Affine {
         int[] inputAsInts = new int[this.len];
         StringBuilder output = new StringBuilder();
         for (int i = 0; i < this.len; i++) {
-            inputAsInts[i] = (this.phrase.charAt(i) - 'a');
-            inputAsInts[i] *= a;
-            inputAsInts[i] += b;
-            inputAsInts[i] %= 26;
-            output.append((char) (inputAsInts[i] + 'a'));
+            if (this.phrase.charAt(i) >= 'a' && this.phrase.charAt(i) <= 'z') {
+                inputAsInts[i] = (this.phrase.charAt(i) - 'a');
+                inputAsInts[i] *= a;
+                inputAsInts[i] += b;
+                inputAsInts[i] %= 26;
+                output.append((char) (inputAsInts[i] + 'a'));
+            }
+            else if (this.phrase.charAt(i) >= 'A' && this.phrase.charAt(i) <= 'Z') {
+                inputAsInts[i] = (this.phrase.charAt(i) - 'A');
+                inputAsInts[i] *= a;
+                inputAsInts[i] += b;
+                inputAsInts[i] %= 26;
+                output.append((char) (inputAsInts[i] + 'A'));
+            }
+            else {
+                output.append((char) (inputAsInts[i] + 0));
+            }
         }
         return output.toString();
     }
@@ -140,13 +152,25 @@ public class Affine {
         ArrayList<Integer> ints = new ArrayList<>();
         StringBuilder decoded = new StringBuilder();
         for (int i = 0; i < input.length(); i++) {
-            ints.add((int) (input.charAt(i) - 'a'));
+            ints.add((int) input.charAt(i));
             if (input.charAt(i) <= 'z' && input.charAt(i) >= 'a') {
+                ints.set(i, input.charAt(i) - 'a');
                 ints.set(i, ints.get(i) - b);
                 ints.set(i, ints.get(i) * a);
                 ints.set(i, Math.floorMod(ints.get(i), 26));
+                decoded.append((char) (ints.get(i) + 'a'));
             }
-            decoded.append((char) (ints.get(i) + 'a'));
+            else if (input.charAt(i) <= 'Z' && input.charAt(i) >= 'A') {
+                ints.set(i, input.charAt(i) - 'A');
+                ints.set(i, ints.get(i) - b);
+                ints.set(i, ints.get(i) * a);
+                ints.set(i, Math.floorMod(ints.get(i), 26));
+                decoded.append((char) (ints.get(i) + 'A'));
+            }
+            else {
+                decoded.append((char) (ints.get(i) + 0)); //TODO: fix
+            }
+
         }
         return decoded.toString();
     }
@@ -157,7 +181,13 @@ public class Affine {
      * @return Likelihood of phrase being correct on a 0-1.0 scale (1.0 being every word is real)
      */
     private double likelihood(String phrase) {
-        String[] words = phrase.split(" ");
+        String[] words;
+        if (phrase.contains(" ")) {
+            words = phrase.split(" ");
+        }
+        else {
+            words = phrase.split("\\x00+"); //If phrase separated by null values (thanks StringBuilder)
+        }
         int realWords = 0;
         int totalWords = words.length;
         for (String word: words) {
@@ -165,6 +195,7 @@ public class Affine {
                 realWords++;
             }
         }
+
         return (double) realWords / (double) totalWords;
     }
 
