@@ -1,20 +1,80 @@
 package AffineCipher;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.TreeMap;
 
 public class Affine {
-    private String string;
+    private String phrase;
     private int len;
-    public Affine(String input) {
-        this.string = input;
-        this.len = string.length();
+    private Scanner scnr;
+    private ArrayList<String> dictArray;
+    private FileReader dictionary;
+    String error = "Error opening dictionary file";
+
+    /** Constructor of Affine object with phrase and dictionary name provided
+     *
+     * @param input Phrase to be used
+     * @param dictionaryName Dictionary to be used (.txt file)
+     */
+    public Affine(String input, String dictionaryName) {
+        setPhrase(input);
+        setDictionary(dictionaryName);
     }
 
+    /** Constructor of Affine object with dictionary name provided and default phrase
+     *
+     * @param dictionaryName Dictionary to be used (.txt file)
+     */
+    public Affine(String dictionaryName) {
+        setPhrase("affine cipher");
+        setDictionary(dictionaryName);
+    }
+
+    /** Constructor of Affine object with default dictionary and phrase
+     *
+     */
+    public Affine() {
+        setPhrase("affine cipher");
+        setDictionary("enable1.txt");
+    }
+
+    /** Sets phrase to use
+     *
+     * @param string Phrase to use
+     */
+    public void setPhrase(String string) {
+        this.phrase = string;
+        this.len = phrase.length();
+    }
+
+    /** Sets dictionary to use (.txt)
+     *
+     * @param name dictionary text file
+     */
+    public void setDictionary(String name) {
+        try {
+            this.dictionary = new FileReader(name);
+            this.scnr = new Scanner(this.dictionary);
+        }
+        catch (IOException io) {
+            System.err.println("Error opening dictionary file");
+        }
+    }
+
+    /** Encodes a phrase using an affine cipher (C = aP + b).
+     *
+     * @param a a value to be used
+     * @param b b value to be used
+     * @return Encoded phrase
+     */
     public String encode(int a, int b) {
         int[] inputAsInts = new int[this.len];
         StringBuilder output = new StringBuilder();
         for (int i = 0; i < this.len; i++) {
-            inputAsInts[i] = (this.string.charAt(i) - 'a');
+            inputAsInts[i] = (this.phrase.charAt(i) - 'a');
             inputAsInts[i] *= a;
             inputAsInts[i] += b;
             inputAsInts[i] %= 26;
@@ -23,22 +83,33 @@ public class Affine {
         return output.toString();
     }
 
-    public String decode(String string) {
+    /** Decodes a phrase created using an affine cipher
+     *
+     * @return Most likely phrase
+     */
+    public String decode() {
+        dictInit();
+        TreeMap<Double, String> likelihoods = new TreeMap<>();
         int[] aVals = {3, 5, 7, 11, 15, 17, 19, 21, 23, 25};
-        ArrayList<String> possibilites = new ArrayList<>();
+        ArrayList<String> possibilities = new ArrayList<>();
         for (int i = 0; i < aVals.length; i++) {
             for (int j = 0; j < 26; j++) {
-                possibilites.add(decoderHelper(string, aVals[i], j));
-                //System.out.println("a: " + aVals[i] + " " + "b: " + j + " " + possibilites.get(possibilites.size() - 1));
+                possibilities.add(decoderHelper(this.phrase, aVals[i], j));
             }
         }
-        for (String word: possibilites) {
-            System.out.println(word);
-            //TODO: check likelihood
+        for (String phrase: possibilities) {
+            likelihoods.put(likelihood(phrase), phrase);
         }
-        return "";
+        return likelihoods.lastEntry().getValue();
     }
 
+    /**
+     *
+     * @param input phrase to be decoded using equation P = a(C - b)
+     * @param a value to use
+     * @param b value to use
+     * @return Decoded phrase
+     */
     private String decoderHelper(String input, int a, int b) {
         ArrayList<Integer> ints = new ArrayList<>();
         StringBuilder decoded = new StringBuilder();
@@ -52,5 +123,59 @@ public class Affine {
             decoded.append((char) (ints.get(i) + 'a'));
         }
         return decoded.toString();
+    }
+
+    /** Checks the likelihood of a phrase being correct by checking how many real words it contains.
+     *
+     * @param phrase phrase to check
+     * @return Likelihood of phrase being correct on a 0-1.0 scale (1.0 being every word is real)
+     */
+    private double likelihood(String phrase) {
+        String[] words = phrase.split(" ");
+        int realWords = 0;
+        int totalWords = words.length;
+        for (String word: words) {
+            if (dictionaryChecker(word)) {
+                realWords++;
+            }
+        }
+        return (double) realWords / (double) totalWords;
+    }
+
+    /** Checks dictionary for a word
+     * @param word to be checked
+     * @return true if found
+     */
+    private boolean dictionaryChecker(String word) {
+        word = word.toLowerCase();
+        int start = 0;
+        int end = dictArray.size();
+        int mid;
+        for (int i = 0; i < this.dictArray.size(); i++) {
+            mid = (start + end) / 2;
+            if (start == end) {
+                return false;
+            }
+            if (dictArray.get(mid).compareTo(word) > 0) {
+                end = mid;
+            }
+            else if (dictArray.get(mid).compareTo(word) < 0) {
+                start = mid;
+            }
+            else {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Puts dictionary into an ArrayList
+     *
+     */
+    private void dictInit() {
+        this.dictArray = new ArrayList<>();
+        while (scnr.hasNext()) {
+            dictArray.add(scnr.next());
+        }
     }
 }
