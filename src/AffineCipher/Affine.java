@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.TreeMap;
 
+/** Class for producing and decoding affine ciphers.
+ *
+ */
 public class Affine {
     private String phrase;
     private int len;
@@ -82,7 +85,7 @@ public class Affine {
         this.scnr = new Scanner(dictionary);
     }
 
-    /** Encodes a phrase using an affine cipher (C = aP + b).
+    /** Encodes current phrase using an affine cipher (C = aP + b).
      *
      * @param a a value to be used
      * @param b b value to be used
@@ -117,7 +120,68 @@ public class Affine {
         return output.toString();
     }
 
-    /** Decodes a phrase created using an affine cipher
+    /** Encodes given phrase using an affine cipher (C = aP + b).
+     *
+     * @param phrase Phrase to be used
+     * @param a a value to be used
+     * @param b b value to be used
+     * @return Encoded phrase
+     */
+    public String encode(String phrase, int a, int b) {
+        if (errorState) {
+            System.err.println(errorStateMsg);
+            return "";
+        }
+        int[] inputAsInts = new int[phrase.length()];
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < phrase.length(); i++) {
+            if (phrase.charAt(i) >= 'a' && phrase.charAt(i) <= 'z') {
+                inputAsInts[i] = (phrase.charAt(i) - 'a');
+                inputAsInts[i] *= a;
+                inputAsInts[i] += b;
+                inputAsInts[i] %= 26;
+                output.append((char) (inputAsInts[i] + 'a'));
+            }
+            else if (phrase.charAt(i) >= 'A' && phrase.charAt(i) <= 'Z') {
+                inputAsInts[i] = (phrase.charAt(i) - 'A');
+                inputAsInts[i] *= a;
+                inputAsInts[i] += b;
+                inputAsInts[i] %= 26;
+                output.append((char) (inputAsInts[i] + 'A'));
+            }
+            else {
+                output.append((char) (inputAsInts[i] + 0));
+            }
+        }
+        return output.toString();
+    }
+
+    /** Decodes given phrase created using an affine cipher
+     *
+     * @param phrase Phrase to be decoded
+     * @return Most likely phrase
+     */
+    public String decode(String phrase) {
+        if (errorState) {
+            System.err.println(errorStateMsg);
+            return "";
+        }
+        dictInit();
+        TreeMap<Double, String> likelihoods = new TreeMap<>();
+        int[] aVals = {3, 5, 7, 11, 15, 17, 19, 21, 23, 25};
+        ArrayList<String> possibilities = new ArrayList<>();
+        for (int i = 0; i < aVals.length; i++) {
+            for (int j = 0; j < 26; j++) {
+                possibilities.add(decoderHelper(phrase, aVals[i], j));
+            }
+        }
+        for (String possiblePhrase: possibilities) {
+            likelihoods.put(likelihood(possiblePhrase), possiblePhrase);
+        }
+        return likelihoods.lastEntry().getValue();
+    }
+
+    /** Decodes current phrase created using an affine cipher
      *
      * @return Most likely phrase
      */
