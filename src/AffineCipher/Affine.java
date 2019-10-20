@@ -11,8 +11,9 @@ public class Affine {
     private int len;
     private Scanner scnr;
     private ArrayList<String> dictArray;
-    private FileReader dictionary;
-    String error = "Error opening dictionary file";
+    private String error = "Error opening dictionary file";
+    private String errorStateMsg = "Please specify a dictionary";
+    private boolean errorState;
 
     /** Constructor of Affine object with phrase and dictionary name provided
      *
@@ -21,7 +22,14 @@ public class Affine {
      */
     public Affine(String input, String dictionaryName) {
         setPhrase(input);
-        setDictionary(dictionaryName);
+        try {
+            setDictionary(dictionaryName);
+            this.errorState = false;
+        }
+        catch (IOException io) {
+            this.errorState = true;
+            System.err.println(error);
+        }
     }
 
     /** Constructor of Affine object with dictionary name provided and default phrase
@@ -30,15 +38,29 @@ public class Affine {
      */
     public Affine(String dictionaryName) {
         setPhrase("affine cipher");
-        setDictionary(dictionaryName);
+        try {
+            setDictionary(dictionaryName);
+            this.errorState = false;
+        }
+        catch (IOException io) {
+            this.errorState = true;
+            System.err.println(error);
+        }
     }
 
     /** Constructor of Affine object with default dictionary and phrase
      *
      */
     public Affine() {
-        setPhrase("affine cipher");
-        setDictionary("enable1.txt");
+        try {
+            setPhrase("affine cipher");
+            setDictionary("enable1.txt");
+            this.errorState = false;
+        }
+        catch (IOException io) {
+            this.errorState = true;
+            System.err.println(error);
+        }
     }
 
     /** Sets phrase to use
@@ -53,15 +75,11 @@ public class Affine {
     /** Sets dictionary to use (.txt)
      *
      * @param name dictionary text file
+     * @throws IOException Error opening file
      */
-    public void setDictionary(String name) {
-        try {
-            this.dictionary = new FileReader(name);
-            this.scnr = new Scanner(this.dictionary);
-        }
-        catch (IOException io) {
-            System.err.println("Error opening dictionary file");
-        }
+    public void setDictionary(String name) throws IOException {
+        FileReader dictionary = new FileReader(name);
+        this.scnr = new Scanner(dictionary);
     }
 
     /** Encodes a phrase using an affine cipher (C = aP + b).
@@ -71,6 +89,10 @@ public class Affine {
      * @return Encoded phrase
      */
     public String encode(int a, int b) {
+        if (errorState) {
+            System.err.println(errorStateMsg);
+            return "";
+        }
         int[] inputAsInts = new int[this.len];
         StringBuilder output = new StringBuilder();
         for (int i = 0; i < this.len; i++) {
@@ -88,6 +110,10 @@ public class Affine {
      * @return Most likely phrase
      */
     public String decode() {
+        if (errorState) {
+            System.err.println(errorStateMsg);
+            return "";
+        }
         dictInit();
         TreeMap<Double, String> likelihoods = new TreeMap<>();
         int[] aVals = {3, 5, 7, 11, 15, 17, 19, 21, 23, 25};
