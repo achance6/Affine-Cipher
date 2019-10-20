@@ -6,6 +6,10 @@ The value a is coprime with 26 while the value b is arbitrary as long as a is no
 
 This program requires a text file dictionary to find the most likely decoded message.
 
+Current functionality:
+- Encoding a message using a provided a and b value.
+- Decoding a message and producing most likely phrase based on the number of real words it contains.
+
 Unimplemented functionality:
 - Update dictionary checking so that edge cases such as possesive words are counted as real words
 - Produce multiple outputs if two+ case are likely
